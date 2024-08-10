@@ -16,7 +16,7 @@ pub enum Location {
     Character(String),
     Bank,
     SharedInventory,
-    MaterialStorage
+    MaterialStorage,
 }
 
 /// Find my sh*t specific player item which is stored and used for indexing
@@ -28,7 +28,7 @@ pub struct PlayerItem {
     pub icon: Option<String>,
     pub item_type: Gw2ItemType,
     pub rarity: Gw2Rarity,
-    pub locations: HashMap<Location, PlayerItemSpecifics>
+    pub locations: HashMap<Location, PlayerItemSpecifics>,
 }
 
 /// Contains specific information for an item at a certain location
@@ -54,11 +54,7 @@ impl PlayerItem {
 }
 
 impl PlayerItem {
-    fn from(
-        location: Location,
-        item: &Gw2PlayerItem,
-        gw2item: &Gw2Item
-    ) -> Self {
+    fn from(location: Location, item: &Gw2PlayerItem, gw2item: &Gw2Item) -> Self {
         Self {
             id: item.id,
             name: gw2item.name.clone(),
@@ -66,14 +62,15 @@ impl PlayerItem {
             icon: gw2item.icon.clone(),
             item_type: gw2item.item_type.clone(),
             rarity: gw2item.rarity.clone(),
-            locations: HashMap::from([
-                (location, PlayerItemSpecifics {
+            locations: HashMap::from([(
+                location,
+                PlayerItemSpecifics {
                     count: item.count,
                     charges: item.charges.unwrap_or(0),
                     upgrades: item.upgrades.clone().unwrap_or(vec![]),
-                    infusions: item.infusions.clone().unwrap_or(vec![])
-                })
-            ])
+                    infusions: item.infusions.clone().unwrap_or(vec![]),
+                },
+            )]),
         }
     }
 
@@ -115,10 +112,18 @@ pub fn fetch_all_items() {
     }
 
     info!("Fetching items from shared inventory...");
-    items.clone().lock().unwrap().push(fetch_from("account/inventory", Location::SharedInventory));
+    items
+        .clone()
+        .lock()
+        .unwrap()
+        .push(fetch_from("account/inventory", Location::SharedInventory));
 
     info!("Fetching items from bank...");
-    items.clone().lock().unwrap().push(fetch_from("account/bank", Location::Bank));
+    items
+        .clone()
+        .lock()
+        .unwrap()
+        .push(fetch_from("account/bank", Location::Bank));
 
     info!("Fetching items from material storage...");
     items.clone().lock().unwrap().push(fetch_materials());
@@ -147,7 +152,6 @@ pub fn fetch_all_items() {
             error!("Failed to refresh index due to:\n{}!", e)
         }
     };
-
 }
 
 /// Fetches all items for the given character
@@ -175,7 +179,11 @@ fn fetch_materials() -> Vec<PlayerItem> {
         Err(_) => Vec::new(),
         Ok(materials) => {
             // Only handle items with count greater than 0
-            let count_gz = materials.iter().map(|i| i.clone()).filter(|i| i.count > 0).collect::<Vec<Gw2PlayerItem>>();
+            let count_gz = materials
+                .iter()
+                .map(|i| i.clone())
+                .filter(|i| i.count > 0)
+                .collect::<Vec<Gw2PlayerItem>>();
 
             convert(Location::MaterialStorage, count_gz)
         }
@@ -205,7 +213,8 @@ fn convert(location: Location, items: Vec<Gw2PlayerItem>) -> Vec<PlayerItem> {
         .collect::<HashMap<usize, &Gw2Item>>();
 
     // Take all items where we found ids for
-    items.iter()
+    items
+        .iter()
         .map(|i| {
             if gw2_items_map.contains_key(&i.id.clone()) {
                 Some(PlayerItem::from(

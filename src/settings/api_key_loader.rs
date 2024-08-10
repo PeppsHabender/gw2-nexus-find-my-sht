@@ -51,7 +51,9 @@ impl ApiKeyLoader {
                         *loading_state.lock().unwrap() = LoadingState::Error("Invalid Api Key!");
                     }
                     Ok(api_key) => {
-                        if api_key.permissions.contains(&Gw2Permission::Inventories) && api_key.permissions.contains(&Gw2Permission::Account) {
+                        if api_key.permissions.contains(&Gw2Permission::Inventories)
+                            && api_key.permissions.contains(&Gw2Permission::Account)
+                        {
                             *loading_state.lock().unwrap() =
                                 LoadingState::Success(check_api_key.clone())
                         } else {

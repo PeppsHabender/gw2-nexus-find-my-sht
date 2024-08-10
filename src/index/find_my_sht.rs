@@ -1,5 +1,5 @@
-use crate::index::item_loader::{Location, PlayerItemSpecifics};
 use crate::index::index_reader::IndexReader;
+use crate::index::item_loader::{Location, PlayerItemSpecifics};
 use crate::settings::settings::Settings;
 use crate::{BANK_ICON_ID, INV_ICON_ID, MAT_STORE_ID, SHARED_INV_ICON_ID};
 use nexus::imgui::{Image, Ui, Window};
@@ -61,7 +61,11 @@ impl ItemSearch {
 
                 ui.same_line();
                 if let Some(last_update) = Settings::get().last_update {
-                    ui.text(last_update.format(" Last Update: %b %d. %H:%M:%S").to_string());
+                    ui.text(
+                        last_update
+                            .format(" Last Update: %b %d. %H:%M:%S")
+                            .to_string(),
+                    );
                 } else {
                     ui.text(" Last Update: Unknown");
                 }
@@ -83,9 +87,27 @@ impl ItemSearch {
                     ui.text(&item.name);
 
                     let mut specifics = item.locations.clone();
-                    render_location(specifics.borrow_mut(), ui, &Location::Bank, BANK_ICON_ID, "in bank");
-                    render_location(specifics.borrow_mut(), ui, &Location::MaterialStorage, MAT_STORE_ID, "in material storage");
-                    render_location(specifics.borrow_mut(), ui, &Location::SharedInventory, SHARED_INV_ICON_ID, "in shared inventory");
+                    render_location(
+                        specifics.borrow_mut(),
+                        ui,
+                        &Location::Bank,
+                        BANK_ICON_ID,
+                        "in bank",
+                    );
+                    render_location(
+                        specifics.borrow_mut(),
+                        ui,
+                        &Location::MaterialStorage,
+                        MAT_STORE_ID,
+                        "in material storage",
+                    );
+                    render_location(
+                        specifics.borrow_mut(),
+                        ui,
+                        &Location::SharedInventory,
+                        SHARED_INV_ICON_ID,
+                        "in shared inventory",
+                    );
 
                     if !specifics.is_empty() {
                         ui.same_line();
@@ -95,7 +117,10 @@ impl ItemSearch {
                             match loc {
                                 Location::Character(char) => {
                                     if ui.is_item_hovered() {
-                                        ui.tooltip_text(format!("{} on char {}", specs.count, char));
+                                        ui.tooltip_text(format!(
+                                            "{} on char {}",
+                                            specs.count, char
+                                        ));
                                     }
                                 }
                                 _ => {}
@@ -107,7 +132,13 @@ impl ItemSearch {
     }
 }
 
-fn render_location(specifis: &mut HashMap<Location, PlayerItemSpecifics>, ui: &Ui, location: &Location, texture_id: &str, tt_suffix: &str) {
+fn render_location(
+    specifis: &mut HashMap<Location, PlayerItemSpecifics>,
+    ui: &Ui,
+    location: &Location,
+    texture_id: &str,
+    tt_suffix: &str,
+) {
     if let Some(specs) = specifis.remove(location) {
         ui.same_line();
         Image::new(get_texture(texture_id).unwrap().id(), [20.0, 20.0]).build(ui);

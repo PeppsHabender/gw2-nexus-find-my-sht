@@ -54,8 +54,7 @@ impl IndexReader {
         let searcher = index_searcher();
 
         let schema: TantivySchema = index.schema().into();
-        let mut parser =
-            QueryParser::for_index(index, vec![schema.name_field, schema.descr_field]);
+        let mut parser = QueryParser::for_index(index, vec![schema.name_field, schema.descr_field]);
         // Put some more importance on names
         parser.set_field_boost(schema.name_field, 2.0);
         parser.set_conjunction_by_default();
@@ -79,7 +78,7 @@ impl IndexReader {
                         item.name.clone(),
                         "https://render.guildwars2.com",
                         icon.strip_prefix("https://render.guildwars2.com").unwrap(),
-                        None
+                        None,
                     );
                 }
             }

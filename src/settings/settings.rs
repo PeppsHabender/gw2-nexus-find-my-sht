@@ -26,7 +26,7 @@ impl Settings {
             api_key: "".to_string(),
             temp_api_key: "".to_string(),
             loader: ApiKeyLoader::new(),
-            last_update: None
+            last_update: None,
         }
     }
 
@@ -92,7 +92,9 @@ impl Settings {
             .password(!edit)
             .build();
         if ui.is_item_hovered() {
-            ui.tooltip_text("Please provide an API Key with the following permissions:\nAccount,Inventories");
+            ui.tooltip_text(
+                "Please provide an API Key with the following permissions:\nAccount,Inventories",
+            );
         }
 
         match self.loader.loading_state() {

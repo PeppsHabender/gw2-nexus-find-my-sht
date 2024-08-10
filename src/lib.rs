@@ -1,4 +1,5 @@
 use crate::index::find_my_sht::ItemSearch;
+use crate::index::item_loader::fetch_all_items;
 use crate::settings::settings::Settings;
 use crate::tantivy::cleanup_tantivy;
 use crate::utils::sub_path;
@@ -11,13 +12,12 @@ use nexus::{
 };
 use std::sync::OnceLock;
 use std::thread::JoinHandle;
-use crate::index::item_loader::fetch_all_items;
 
 mod entities;
 mod index;
 mod settings;
-mod utils;
 mod tantivy;
+mod utils;
 
 nexus::export!(
     name: "Find my Sh*t",
@@ -52,7 +52,10 @@ fn load() {
             *Settings::get_mut() = settings;
         }
 
-        THREADS.get_mut().unwrap().push(std::thread::spawn(fetch_all_items));
+        THREADS
+            .get_mut()
+            .unwrap()
+            .push(std::thread::spawn(fetch_all_items));
     }
 
     register_render(RenderType::OptionsRender, render!(render_options)).revert_on_unload();

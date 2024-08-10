@@ -41,18 +41,21 @@ pub fn auth_request<T: DeserializeOwned>(endpoint: &str) -> anyhow::Result<T> {
 }
 
 pub fn fetch_items(ids: Vec<usize>) -> Vec<Gw2Item> {
-    ids.chunks(200).map(|ids| {
-        let id_str = ids
-            .iter()
-            .map(|i| i.to_string())
-            .collect::<Vec<_>>()
-            .join(",");
+    ids.chunks(200)
+        .map(|ids| {
+            let id_str = ids
+                .iter()
+                .map(|i| i.to_string())
+                .collect::<Vec<_>>()
+                .join(",");
 
-        let url = format!("items?lang=en&ids={id_str}");
+            let url = format!("items?lang=en&ids={id_str}");
 
-        auth_request::<Vec<Gw2Item>>(url.as_str())
-    }).filter_map(|i| i.ok())
-        .flat_map(identity).collect()
+            auth_request::<Vec<Gw2Item>>(url.as_str())
+        })
+        .filter_map(|i| i.ok())
+        .flat_map(identity)
+        .collect()
 }
 
 pub unsafe fn sub_path(sub_dir: &str) -> PathBuf {

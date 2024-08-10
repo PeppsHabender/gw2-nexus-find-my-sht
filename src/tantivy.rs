@@ -1,7 +1,9 @@
 use crate::utils::sub_path;
 use std::fs::{create_dir_all, remove_file};
 use std::sync::OnceLock;
-use tantivy::schema::{Field, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED, TEXT};
+use tantivy::schema::{
+    Field, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED, TEXT,
+};
 use tantivy::tokenizer::NgramTokenizer;
 use tantivy::{Index, IndexReader, IndexWriter, ReloadPolicy, Searcher, TantivyDocument};
 
@@ -20,12 +22,13 @@ pub fn tantivy_index() -> &'static Index {
             create_dir_all(index_dir.clone()).expect("dir to be created");
         }
 
-        let index = match Index::create_in_dir(index_dir.clone(),schema()) {
+        let index = match Index::create_in_dir(index_dir.clone(), schema()) {
             Ok(index) => index,
             Err(_) => Index::open_in_dir(index_dir.clone()).unwrap(),
         };
 
-        index.tokenizers()
+        index
+            .tokenizers()
             .register("ngram", NgramTokenizer::new(3, 10, false).unwrap());
 
         let _ = INDEX.set(index);
@@ -47,7 +50,10 @@ pub fn cleanup_tantivy() {
     }
 }
 
-pub fn add_documents<T>(iter: T) where T: Iterator<Item=TantivyDocument> {
+pub fn add_documents<T>(iter: T)
+where
+    T: Iterator<Item = TantivyDocument>,
+{
     let writer = writer();
     let _ = writer.delete_all_documents();
     iter.for_each(|d| {
@@ -71,7 +77,8 @@ fn reader() -> &'static mut IndexReader {
         let r = tantivy_index()
             .reader_builder()
             .reload_policy(ReloadPolicy::Manual)
-            .try_into().unwrap();
+            .try_into()
+            .unwrap();
 
         let _ = READER.set(r);
         reader()
