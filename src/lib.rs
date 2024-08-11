@@ -13,6 +13,7 @@ use nexus::{
 use std::sync::OnceLock;
 use std::thread::JoinHandle;
 
+mod constants;
 mod entities;
 mod index;
 mod settings;
@@ -52,10 +53,7 @@ fn load() {
             *Settings::get_mut() = settings;
         }
 
-        THREADS
-            .get_mut()
-            .unwrap()
-            .push(std::thread::spawn(fetch_all_items));
+        spawn_thread(fetch_all_items);
     }
 
     register_render(RenderType::OptionsRender, render!(render_options)).revert_on_unload();
@@ -93,5 +91,15 @@ fn unload() {
         cleanup_tantivy();
 
         let _ = ItemSearch::take();
+    }
+}
+
+pub fn spawn_thread<F>(f: F)
+where
+    F: FnOnce() -> (),
+    F: Send + 'static,
+{
+    unsafe {
+        THREADS.get_mut().unwrap().push(std::thread::spawn(f));
     }
 }

@@ -1,5 +1,5 @@
 use chrono::{DateTime, Local};
-use nexus::imgui::Ui;
+use nexus::imgui::{Slider, Ui};
 use serde::{Deserialize, Serialize};
 use std::cell::{Cell, RefCell};
 use std::fs::{create_dir_all, File};
@@ -12,6 +12,8 @@ use crate::settings::api_key_loader::ApiKeyLoader;
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Settings {
     pub api_key: String,
+    pub item_load_limit: i32,
+    pub color_items: bool,
     pub last_update: Option<DateTime<Local>>,
     #[serde(skip)]
     temp_api_key: String,
@@ -24,9 +26,11 @@ impl Settings {
     pub fn new() -> Self {
         Self {
             api_key: "".to_string(),
+            item_load_limit: 10,
+            color_items: true,
+            last_update: None,
             temp_api_key: "".to_string(),
             loader: ApiKeyLoader::new(),
-            last_update: None,
         }
     }
 
@@ -125,6 +129,9 @@ impl Settings {
             }
             _ => {}
         }
+
+        Slider::new("Item Load Limit", 1, 30).build(ui, &mut self.item_load_limit);
+        ui.checkbox("Color items by Rarity", &mut self.color_items);
 
         EDIT.set(edit);
     }

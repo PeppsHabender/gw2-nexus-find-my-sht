@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -8,12 +9,14 @@ use tantivy::schema::Value;
 use tantivy::TantivyDocument;
 
 use crate::index::item_loader::PlayerItem;
+use crate::settings::settings::Settings;
 use crate::tantivy::{index_searcher, tantivy_index, TantivySchema};
 use crate::THREADS;
 
 /// Contains all tantivy results from the last search
 pub struct IndexReader {
     pub last_result: Arc<Mutex<Vec<PlayerItem>>>,
+    pub has_more: Arc<AtomicBool>,
     loading: Arc<Mutex<bool>>,
 }
 
@@ -21,23 +24,25 @@ impl IndexReader {
     pub fn new() -> Self {
         Self {
             last_result: Arc::new(Mutex::new(vec![])),
+            has_more: Arc::new(AtomicBool::new(false)),
             loading: Arc::new(Mutex::new(false)),
         }
     }
 
-    pub fn search(&mut self, text: String) {
+    pub fn search(&mut self, text: String, page: usize) {
         let last_result = self.last_result.clone();
         let loading = self.loading.clone();
+        let has_more = self.has_more.clone();
 
         unsafe {
             THREADS.get_mut().unwrap().push(std::thread::spawn(move || {
-                // Uuuuh not idea what I'm doing here, but never change a running system
+                // Uuuuh no idea whay I'm doing this, but never change a running system
                 while *loading.lock().unwrap() {
                     std::thread::sleep(Duration::from_millis(20));
                 }
 
                 *loading.lock().unwrap() = true;
-                let result = Self::search_for(text.clone().to_lowercase());
+                let result = Self::search_for(text.clone().to_lowercase(), page, has_more);
                 *loading.lock().unwrap() = false;
                 match result {
                     Ok(res) => {
@@ -49,7 +54,11 @@ impl IndexReader {
         }
     }
 
-    fn search_for(text: String) -> anyhow::Result<Vec<PlayerItem>> {
+    fn search_for(
+        text: String,
+        page: usize,
+        has_more: Arc<AtomicBool>,
+    ) -> anyhow::Result<Vec<PlayerItem>> {
         let index = tantivy_index();
         let searcher = index_searcher();
 
@@ -60,7 +69,11 @@ impl IndexReader {
         parser.set_conjunction_by_default();
 
         let query = parser.parse_query(&text)?;
-        let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
+        let limit = Settings::get().item_load_limit as usize;
+        let top_docs = searcher.search(
+            &query,
+            &TopDocs::with_limit(limit + 1).and_offset(limit * page),
+        )?;
 
         let mut found: Vec<PlayerItem> = vec![];
         for (_, doc_address) in top_docs {
@@ -69,6 +82,9 @@ impl IndexReader {
                 found.push(rmp_serde::from_slice(item.as_bytes().unwrap()).unwrap())
             }
         }
+
+        has_more.store(found.len() > limit, Ordering::SeqCst);
+        found.truncate(limit);
 
         // Load all icons for the search results
         for item in &found {

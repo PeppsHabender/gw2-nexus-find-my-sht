@@ -1,3 +1,7 @@
+use crate::constants::{
+    ASCENDED_COLOR, EXOTIC_COLOR, FINE_COLOR, JUNK_COLOR, LEGENDARY_COLOR, MASTERWORK_COLOR,
+    RARE_COLOR,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -81,8 +85,8 @@ pub enum Gw2ItemType {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub enum Gw2Rarity {
-    #[default]
     Junk,
+    #[default]
     Basic,
     Fine,
     Masterwork,
@@ -90,6 +94,21 @@ pub enum Gw2Rarity {
     Exotic,
     Ascended,
     Legendary,
+}
+
+impl Gw2Rarity {
+    pub fn color(&self) -> [f32; 4] {
+        match self {
+            Gw2Rarity::Junk => JUNK_COLOR,
+            Gw2Rarity::Basic => [1.0, 1.0, 1.0, 1.0],
+            Gw2Rarity::Fine => FINE_COLOR,
+            Gw2Rarity::Masterwork => MASTERWORK_COLOR,
+            Gw2Rarity::Rare => RARE_COLOR,
+            Gw2Rarity::Exotic => EXOTIC_COLOR,
+            Gw2Rarity::Ascended => ASCENDED_COLOR,
+            Gw2Rarity::Legendary => LEGENDARY_COLOR,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
