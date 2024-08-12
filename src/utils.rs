@@ -40,15 +40,17 @@ pub fn auth_request<T: DeserializeOwned>(endpoint: &str) -> anyhow::Result<T> {
     request(settings.api_key.clone(), endpoint)
 }
 
+pub fn comma_sep<T>(strs: T) where T: Iterator<Item=usize> {
+    strs.iter()
+        .map(|i| i.to_string())
+        .collect::<Vec<_>>()
+        .join(",");
+}
+
 pub fn fetch_items(ids: Vec<usize>) -> Vec<Gw2Item> {
     ids.chunks(200)
         .map(|ids| {
-            let id_str = ids
-                .iter()
-                .map(|i| i.to_string())
-                .collect::<Vec<_>>()
-                .join(",");
-
+            let id_str = comma_sep(ids);
             let url = format!("items?lang=en&ids={id_str}");
 
             auth_request::<Vec<Gw2Item>>(url.as_str())

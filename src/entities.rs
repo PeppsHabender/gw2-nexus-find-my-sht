@@ -121,3 +121,17 @@ pub struct Gw2Item {
     pub item_type: Gw2ItemType,
     pub icon: Option<String>,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct Gw2TpInfo {
+    pub quantity: usize,
+    pub unit_price: usize
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Gw2Tp {
+    pub id: usize,
+    pub whitelisted: bool,
+    pub buys: Gw2TpInfo,
+    pub sells: Gw2TpInfo
+}
