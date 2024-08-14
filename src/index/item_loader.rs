@@ -1,4 +1,6 @@
-use crate::entities::{Gw2Inventory, Gw2Item, Gw2ItemType, Gw2PlayerItem, Gw2Rarity};
+use crate::entities::{
+    Gw2Inventory, Gw2Item, Gw2ItemType, Gw2PlayerItem, Gw2Rarity, Gw2Tp, Gw2TpInfo,
+};
 use crate::settings::settings::Settings;
 use crate::tantivy::{add_documents, tantivy_index, TantivySchema};
 use crate::utils::{auth_request, fetch_items};
@@ -29,6 +31,8 @@ pub struct PlayerItem {
     pub item_type: Gw2ItemType,
     pub rarity: Gw2Rarity,
     pub locations: HashMap<Location, PlayerItemSpecifics>,
+    #[serde(skip)]
+    pub tp_info: Option<Gw2Tp>,
 }
 
 /// Contains specific information for an item at a certain location
@@ -71,12 +75,24 @@ impl PlayerItem {
                     infusions: item.infusions.clone().unwrap_or(vec![]),
                 },
             )]),
+            tp_info: None,
         }
+    }
+
+    pub fn set_tp(&mut self, tp: Option<Gw2Tp>) {
+        self.tp_info = tp;
     }
 
     fn add(&mut self, item: &PlayerItem) {
         for (loc, spec) in &item.locations {
-            self.locations.insert(loc.clone(), spec.clone());
+            if let Some(curr) = self.locations.get_mut(loc) {
+                curr.count += spec.count.clone();
+                curr.charges += spec.charges.clone();
+                curr.infusions.append(&mut spec.infusions.clone());
+                curr.upgrades.append(&mut spec.upgrades.clone());
+            } else {
+                self.locations.insert(loc.clone(), spec.clone());
+            }
         }
     }
 }

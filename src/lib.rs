@@ -40,11 +40,23 @@ const MAT_STORE_ID: &str = "MAT_S_ICON";
 const SHARED_INV_ICON_ID: &str = "SHARED_INV_ICON";
 const INV_ICON_ID: &str = "INV_ICON";
 
+static GOLD_ICON_BYTES: &'static [u8] = include_bytes!("../icons/gold.png");
+static SILVER_ICON_BYTES: &'static [u8] = include_bytes!("../icons/silver.png");
+static COPPER_ICON_BYTES: &'static [u8] = include_bytes!("../icons/copper.png");
+
+const GOLD_ICON_ID: &str = "GOLD_ICON";
+const SILVER_ICON_ID: &str = "SILVER_ICON";
+const COPPER_ICON_ID: &str = "COPPER_ICON";
+
 fn load() {
     load_texture_from_memory(BANK_ICON_ID, BANK_ICON_BYTES, None);
     load_texture_from_memory(MAT_STORE_ID, MAT_STORE_ICON_BYTES, None);
     load_texture_from_memory(SHARED_INV_ICON_ID, SHARED_INV_ICON_BYTES, None);
     load_texture_from_memory(INV_ICON_ID, INV_ICON_BYTES, None);
+
+    load_texture_from_memory(GOLD_ICON_ID, GOLD_ICON_BYTES, None);
+    load_texture_from_memory(SILVER_ICON_ID, SILVER_ICON_BYTES, None);
+    load_texture_from_memory(COPPER_ICON_ID, COPPER_ICON_BYTES, None);
 
     unsafe {
         let _ = THREADS.set(vec![]);

@@ -1,17 +1,20 @@
+use log::{error, info};
+use nexus::texture::{get_texture, load_texture_from_url};
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-
-use nexus::texture::{get_texture, load_texture_from_url};
 use tantivy::collector::TopDocs;
 use tantivy::query::QueryParser;
 use tantivy::schema::Value;
 use tantivy::TantivyDocument;
 
+use crate::entities::Gw2Tp;
 use crate::index::item_loader::PlayerItem;
 use crate::settings::settings::Settings;
+use crate::spawn_thread;
 use crate::tantivy::{index_searcher, tantivy_index, TantivySchema};
-use crate::THREADS;
+use crate::utils::auth_request;
 
 /// Contains all tantivy results from the last search
 pub struct IndexReader {
@@ -34,24 +37,53 @@ impl IndexReader {
         let loading = self.loading.clone();
         let has_more = self.has_more.clone();
 
-        unsafe {
-            THREADS.get_mut().unwrap().push(std::thread::spawn(move || {
-                // Uuuuh no idea whay I'm doing this, but never change a running system
-                while *loading.lock().unwrap() {
-                    std::thread::sleep(Duration::from_millis(20));
-                }
+        spawn_thread(move || {
+            // Uuuuh no idea why I'm doing this, but never change a running system
+            while *loading.lock().unwrap() {
+                std::thread::sleep(Duration::from_millis(20));
+            }
 
-                *loading.lock().unwrap() = true;
-                let result = Self::search_for(text.clone().to_lowercase(), page, has_more);
-                *loading.lock().unwrap() = false;
-                match result {
-                    Ok(res) => {
-                        *last_result.lock().unwrap() = res;
-                    }
-                    Err(_) => {}
+            *loading.lock().unwrap() = true;
+            let result = Self::search_for(text.clone().to_lowercase(), page, has_more);
+            *loading.lock().unwrap() = false;
+            match result {
+                Ok(res) => {
+                    *last_result.lock().unwrap() = res.clone();
+
+                    let ids = res
+                        .iter()
+                        .map(|i| i.id.clone().to_string())
+                        .collect::<Vec<_>>()
+                        .join(",");
+
+                    let last_result = last_result.clone();
+                    spawn_thread(move || {
+                        match auth_request::<Vec<Gw2Tp>>(&format!("commerce/prices?ids={ids}")) {
+                            Ok(tp) => {
+                                let tp = tp
+                                    .iter()
+                                    .map(|tp| (tp.id, tp))
+                                    .collect::<HashMap<usize, &Gw2Tp>>();
+                                if tp.is_empty() {
+                                    return;
+                                }
+
+                                let len = last_result.lock().unwrap().len();
+                                for i in 0..len {
+                                    let id = last_result.lock().unwrap()[i].id;
+                                    let tp = tp.get(&id).map(|x| **x);
+                                    last_result.lock().unwrap()[i].set_tp(tp);
+                                }
+                            }
+                            Err(e) => {
+                                error!("{e}");
+                            }
+                        }
+                    });
                 }
-            }));
-        }
+                Err(_) => {}
+            }
+        });
     }
 
     fn search_for(

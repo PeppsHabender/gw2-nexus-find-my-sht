@@ -122,16 +122,28 @@ pub struct Gw2Item {
     pub icon: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Gw2TpInfo {
     pub quantity: usize,
-    pub unit_price: usize
+    pub unit_price: usize,
 }
 
-#[derive(Serialize, Deserialize)]
+impl Gw2TpInfo {
+    pub fn units(&self) -> (usize, usize, usize) {
+        let gold = self.unit_price / 10_000;
+        let remaining_copper_after_gold = self.unit_price % 10_000;
+
+        let silver = remaining_copper_after_gold / 100;
+        let copper = remaining_copper_after_gold % 100;
+
+        (gold, silver, copper)
+    }
+}
+
+#[derive(Default, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Gw2Tp {
     pub id: usize,
     pub whitelisted: bool,
     pub buys: Gw2TpInfo,
-    pub sells: Gw2TpInfo
+    pub sells: Gw2TpInfo,
 }
