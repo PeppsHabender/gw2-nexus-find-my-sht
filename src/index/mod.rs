@@ -3,3 +3,4 @@ pub mod item_loader;
 
 // Used in search only
 mod index_reader;
+mod wiki_search;

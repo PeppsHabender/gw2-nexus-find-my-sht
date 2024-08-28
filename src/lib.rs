@@ -15,9 +15,11 @@ use std::thread::JoinHandle;
 
 mod constants;
 mod entities;
+mod fms_entities;
 mod index;
 mod settings;
 mod tantivy;
+mod ui_utils;
 mod utils;
 
 nexus::export!(
@@ -25,7 +27,8 @@ nexus::export!(
     signature: -0x13376969,
     load,
     unload,
-    flags: AddonFlags::None
+    flags: AddonFlags::None,
+
 );
 
 static mut THREADS: OnceLock<Vec<JoinHandle<()>>> = OnceLock::new();
@@ -34,11 +37,13 @@ static BANK_ICON_BYTES: &'static [u8] = include_bytes!("../icons/bank.png");
 static MAT_STORE_ICON_BYTES: &'static [u8] = include_bytes!("../icons/mat_store.png");
 static SHARED_INV_ICON_BYTES: &'static [u8] = include_bytes!("../icons/shared_inv.png");
 static INV_ICON_BYTES: &'static [u8] = include_bytes!("../icons/inv.png");
+static WIKI_ICON_BYTES: &'static [u8] = include_bytes!("../icons/wiki.png");
 
 const BANK_ICON_ID: &str = "BANK_ICON";
 const MAT_STORE_ID: &str = "MAT_S_ICON";
 const SHARED_INV_ICON_ID: &str = "SHARED_INV_ICON";
 const INV_ICON_ID: &str = "INV_ICON";
+const WIKI_ICON_ID: &str = "WIKI_ICON";
 
 static GOLD_ICON_BYTES: &'static [u8] = include_bytes!("../icons/gold.png");
 static SILVER_ICON_BYTES: &'static [u8] = include_bytes!("../icons/silver.png");
@@ -53,6 +58,7 @@ fn load() {
     load_texture_from_memory(MAT_STORE_ID, MAT_STORE_ICON_BYTES, None);
     load_texture_from_memory(SHARED_INV_ICON_ID, SHARED_INV_ICON_BYTES, None);
     load_texture_from_memory(INV_ICON_ID, INV_ICON_BYTES, None);
+    load_texture_from_memory(WIKI_ICON_ID, WIKI_ICON_BYTES, None);
 
     load_texture_from_memory(GOLD_ICON_ID, GOLD_ICON_BYTES, None);
     load_texture_from_memory(SILVER_ICON_ID, SILVER_ICON_BYTES, None);

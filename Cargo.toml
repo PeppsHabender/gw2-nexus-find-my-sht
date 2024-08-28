@@ -15,6 +15,7 @@ anyhow = "1.0.86"
 ureq = { version = "2.10.0", features = ["json", "native-tls"] }
 tantivy = "0.22.0"
 chrono = { version = "0.4.38", features = ["clock","serde"] }
+open = "5.3.0"
 
 [lib]
 crate-type = ["cdylib"]

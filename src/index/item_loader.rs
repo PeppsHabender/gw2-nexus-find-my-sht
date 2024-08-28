@@ -1,107 +1,11 @@
-use crate::entities::{
-    Gw2Inventory, Gw2Item, Gw2ItemType, Gw2PlayerItem, Gw2Rarity, Gw2Tp, Gw2TpInfo,
-};
+use crate::entities::{Gw2Inventory, Gw2Item, Gw2PlayerItem};
+use crate::fms_entities::player_item::{Location, PlayerItem};
 use crate::settings::settings::Settings;
-use crate::tantivy::{add_documents, tantivy_index, TantivySchema};
+use crate::tantivy::add_documents;
 use crate::utils::{auth_request, fetch_items};
 use log::{debug, error, info};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
 use std::sync::{Arc, Mutex};
-use tantivy::{doc, TantivyDocument};
-
-/// Defines where a specific item lies on the account
-/// TODO: Legendary Armory, Equipments
-#[derive(PartialEq, Eq, Hash, Debug, Clone, Serialize, Deserialize)]
-pub enum Location {
-    Character(String),
-    Bank,
-    SharedInventory,
-    MaterialStorage,
-}
-
-/// Find my sh*t specific player item which is stored and used for indexing
-#[derive(Default, Debug, Clone, Serialize, Deserialize)]
-pub struct PlayerItem {
-    pub id: usize,
-    pub name: String,
-    pub description: Option<String>,
-    pub icon: Option<String>,
-    pub item_type: Gw2ItemType,
-    pub rarity: Gw2Rarity,
-    pub locations: HashMap<Location, PlayerItemSpecifics>,
-    #[serde(skip)]
-    pub tp_info: Option<Gw2Tp>,
-}
-
-/// Contains specific information for an item at a certain location
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct PlayerItemSpecifics {
-    pub count: usize,
-    pub charges: usize,
-    pub upgrades: Vec<usize>,
-    pub infusions: Vec<usize>,
-}
-
-impl PlayerItem {
-    fn doc(&self) -> TantivyDocument {
-        let schema: TantivySchema = tantivy_index().schema().into();
-
-        doc!(
-            schema.id_field => self.id as u64,
-            schema.name_field => self.name.clone().to_lowercase(),
-            schema.descr_field => self.description.clone().unwrap_or("".to_string()).to_lowercase(),
-            schema.item_field => rmp_serde::to_vec(self).expect("to be serialized")
-        )
-    }
-}
-
-impl PlayerItem {
-    fn from(location: Location, item: &Gw2PlayerItem, gw2item: &Gw2Item) -> Self {
-        Self {
-            id: item.id,
-            name: gw2item.name.clone(),
-            description: gw2item.description.clone(),
-            icon: gw2item.icon.clone(),
-            item_type: gw2item.item_type.clone(),
-            rarity: gw2item.rarity.clone(),
-            locations: HashMap::from([(
-                location,
-                PlayerItemSpecifics {
-                    count: item.count,
-                    charges: item.charges.unwrap_or(0),
-                    upgrades: item.upgrades.clone().unwrap_or(vec![]),
-                    infusions: item.infusions.clone().unwrap_or(vec![]),
-                },
-            )]),
-            tp_info: None,
-        }
-    }
-
-    pub fn set_tp(&mut self, tp: Option<Gw2Tp>) {
-        self.tp_info = tp;
-    }
-
-    fn add(&mut self, item: &PlayerItem) {
-        for (loc, spec) in &item.locations {
-            if let Some(curr) = self.locations.get_mut(loc) {
-                curr.count += spec.count.clone();
-                curr.charges += spec.charges.clone();
-                curr.infusions.append(&mut spec.infusions.clone());
-                curr.upgrades.append(&mut spec.upgrades.clone());
-            } else {
-                self.locations.insert(loc.clone(), spec.clone());
-            }
-        }
-    }
-}
-
-impl Hash for PlayerItem {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        state.write_usize(self.id)
-    }
-}
 
 /// Fetches all items at all locations defined in [Location]
 pub fn fetch_all_items() {

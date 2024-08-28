@@ -9,6 +9,16 @@ use ureq::Error;
 use crate::entities::Gw2Item;
 use crate::settings::settings::Settings;
 
+pub trait Searcher<T> {
+    fn is_loading(&self) -> bool;
+
+    fn has_more(&self) -> bool;
+
+    fn search(&self, query: String, page: usize);
+
+    fn last_result(&self) -> T;
+}
+
 pub fn request<T: DeserializeOwned>(api_key: String, endpoint: &str) -> anyhow::Result<T> {
     let mut authorization = "Bearer ".to_string();
     authorization.push_str(api_key.as_str());
