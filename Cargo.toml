@@ -1,9 +1,9 @@
 [package]
 name = "find-my-sht"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
-authors = ["Inquest Agent L"]
-repository = "https://github.com/zerthox/nexus-rs"
+authors = ["Agent L"]
+repository = "https://github.com/PeppsHabender/gw2-nexus-find-my-sht/nexus-rs"
 
 [dependencies]
 log = "0.4.21"

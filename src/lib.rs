@@ -28,7 +28,6 @@ nexus::export!(
     load,
     unload,
     flags: AddonFlags::None,
-
 );
 
 static mut THREADS: OnceLock<Vec<JoinHandle<()>>> = OnceLock::new();
